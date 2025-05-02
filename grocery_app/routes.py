@@ -29,8 +29,8 @@ def new_store():
         db.session.add(store)
         db.session.commit()
         flash(f"Store '{form.title.data}' was successfully created!", "success")
-        return redirect(url_for('main.store_detail', store_id=new_store.id))
-    return render_template('new_store.html')
+        return redirect(url_for('main.store_detail', store_id=store.id))
+    return render_template('new_store.html', form=form)
 
 @main.route('/new_item', methods=['GET', 'POST'])
 def new_item():
@@ -41,13 +41,13 @@ def new_item():
             price=form.price.data,
             category=form.category.data,
             photo_url=form.photo_url.data,
-            store_id=form.store_id.data.id
+            store=form.store.data,
         )
         db.session.add(item)
         db.session.commit()
         flash(f"Item '{form.name.data}' was successfully created!", "success")
-        return redirect(url_for('main.item_detail', item_id=new_item.id))
-    return render_template('new_item.html')
+        return redirect(url_for('main.item_detail', item_id=item.id))
+    return render_template('new_item.html', form=form)
 
 @main.route('/store/<store_id>', methods=['GET', 'POST'])
 def store_detail(store_id):
@@ -59,7 +59,7 @@ def store_detail(store_id):
         db.session.commit()
         flash(f"Store '{form.title.data}' was successfully updated!", "success")
         return redirect(url_for('main.store_detail', store_id=store.id))
-    return render_template('store_detail.html', store=store)
+    return render_template('store_detail.html', store=store, form=form)
 
 @main.route('/item/<item_id>', methods=['GET', 'POST'])
 def item_detail(item_id):
@@ -70,9 +70,9 @@ def item_detail(item_id):
         item.price = form.price.data
         item.category = form.category.data
         item.photo_url = form.photo_url.data
-        item.store_id = form.store_id.data.id
+        item.store = form.store.data
         db.session.commit()
         flash(f"Item '{form.name.data}' was successfully updated!", "success")
         return redirect(url_for('main.item_detail', item_id=item.id))
-    return render_template('item_detail.html', item=item)
+    return render_template('item_detail.html', item=item, form=form)
 

@@ -1,56 +1,59 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, DateField, SelectField, SubmitField
-from wtforms.ext.sqlalchemy.fields import QuerySelectField
-from wtforms.validators import DataRequired, Length, URL
+from wtforms import StringField, DateField, SelectField, SubmitField, FloatField
+from wtforms_sqlalchemy.fields import QuerySelectField
+from wtforms.validators import DataRequired, Length, URL, Optional
+from grocery_app.models import GroceryStore
 
+# Proper query factory using app-level model path
 def store_query():
-    from models import GroceryStore
     return GroceryStore.query
 
 class GroceryStoreForm(FlaskForm):
     """Form for adding/updating a GroceryStore."""
+
     title = StringField(
-        'Store Name',
+        "Store Title", 
         validators=[DataRequired(), Length(max=100)]
     )
     address = StringField(
-        'Address',
+        "Address", 
         validators=[DataRequired(), Length(max=200)]
     )
-    submit = SubmitField('Submit')
+    submit = SubmitField("Submit")
 
 class GroceryItemForm(FlaskForm):
     """Form for adding/updating a GroceryItem."""
 
-name = StringField(
-    'Item Name',
-    validators=[DataRequired(), Length(max=100)]
-)
-price = StringField(
-        'Price',
+    name = StringField(
+        "Item Name", 
+        validators=[DataRequired(), Length(max=100)]
+    )
+    price = FloatField(
+        "Price ($)", 
         validators=[DataRequired()]
     )
-category = SelectField(
-        'Category',
+    category = SelectField(
+        "Category",
         choices=[
-            ('Produce', 'Produce'),
-            ('Deli', 'Deli'),
-            ('Bakery', 'Bakery'),
-            ('Pantry', 'Pantry'),
-            ('Frozen', 'Frozen'),
-            ('Other', 'Other')
+            ('PRODUCE', 'Produce'),
+            ('DAIRY', 'Dairy'),
+            ('BAKERY', 'Bakery'),
+            ('MEAT', 'Meat'),
+            ('PANTRY', 'Pantry'),
+            ('FROZEN', 'Frozen'),
+            ('OTHER', 'Other')
         ],
         validators=[DataRequired()]
     )
-photo_url = StringField(
-        'Photo URL',
-        validators=[URL(), Length(max=200)]
+    photo_url = StringField(
+        "Photo URL", 
+        validators=[Optional(), URL()]
     )
-store_id = QuerySelectField(
-        'Store',
-        query_factory=lambda: GroceryStore.query.all(),
-        get_label='title',
-        allow_blank=True,
+    store = QuerySelectField(
+        "Store", 
+        query_factory=store_query, 
+        allow_blank=False, 
+        get_label="title",
         validators=[DataRequired()]
     )
-submit = SubmitField('Submit')
+    submit = SubmitField("Submit")
