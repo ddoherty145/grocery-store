@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash
 from datetime import date, datetime
-from grocery_app.models import GroceryStore, GroceryItem
+from flask_login import login_required, current_user
+from grocery_app.models import GroceryStore, GroceryItem, User
 from grocery_app.forms import GroceryStoreForm, GroceryItemForm
 
 # Import app and db from events_app package so that we can run app
@@ -15,16 +16,17 @@ main = Blueprint("main", __name__)
 @main.route('/')
 def homepage():
     all_stores = GroceryStore.query.all()
-    print(all_stores)
     return render_template('home.html', all_stores=all_stores)
 
 @main.route('/new_store', methods=['GET', 'POST'])
+@login_required
 def new_store():
     form = GroceryStoreForm()
     if form.validate_on_submit():
         store = GroceryStore(
             title=form.title.data,
             address=form.address.data,
+            created_by_id=current_user.id
         )
         db.session.add(store)
         db.session.commit()
@@ -33,6 +35,7 @@ def new_store():
     return render_template('new_store.html', form=form)
 
 @main.route('/new_item', methods=['GET', 'POST'])
+@login_required
 def new_item():
     form = GroceryItemForm()
     if form.validate_on_submit():
@@ -42,6 +45,7 @@ def new_item():
             category=form.category.data,
             photo_url=form.photo_url.data,
             store=form.store.data,
+            created_by_id=current_user.id
         )
         db.session.add(item)
         db.session.commit()
@@ -50,6 +54,7 @@ def new_item():
     return render_template('new_item.html', form=form)
 
 @main.route('/store/<store_id>', methods=['GET', 'POST'])
+@login_required
 def store_detail(store_id):
     store = GroceryStore.query.get(store_id)
     form = GroceryStoreForm(obj=store)
@@ -62,6 +67,7 @@ def store_detail(store_id):
     return render_template('store_detail.html', store=store, form=form)
 
 @main.route('/item/<item_id>', methods=['GET', 'POST'])
+@login_required
 def item_detail(item_id):
     item = GroceryItem.query.get(item_id)
     form = GroceryItemForm(obj=item)
@@ -76,3 +82,36 @@ def item_detail(item_id):
         return redirect(url_for('main.item_detail', item_id=item.id))
     return render_template('item_detail.html', item=item, form=form)
 
+@main.route('/add_to_shopping_list/<item_id>', methods=['POST'])
+@login_required
+def add_to_shopping_list(item_id):
+    """Add an item to the current user's shopping list."""
+    item = GroceryItem.query.get(item_id)
+    
+    if item in current_user.shopping_list_items:
+        flash(f"{item.name} is already in your shopping list!")
+    else:
+        current_user.shopping_list_items.append(item)
+        db.session.commit()
+        flash(f"{item.name} added to your shopping list!")
+    
+    return redirect(url_for('main.item_detail', item_id=item.id))
+
+@main.route('/remove_from_shopping_list/<item_id>', methods=['POST'])
+@login_required
+def remove_from_shopping_list(item_id):
+    """Remove an item from the current user's shopping list."""
+    item = GroceryItem.query.get(item_id)
+    
+    if item in current_user.shopping_list_items:
+        current_user.shopping_list_items.remove(item)
+        db.session.commit()
+        flash(f"{item.name} removed from your shopping list!")
+    
+    return redirect(url_for('main.shopping_list'))
+
+@main.route('/shopping_list')
+@login_required
+def shopping_list():
+    """Display the current user's shopping list."""
+    return render_template('shopping_list.html', items=current_user.shopping_list_items)

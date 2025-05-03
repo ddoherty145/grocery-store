@@ -1,8 +1,8 @@
 from grocery_app.extensions import db
 from grocery_app.utils import FormEnum
 from flask_login import UserMixin
-from grocery_app.extensions import db
 
+# Bridge table for shopping list many-to-many relationship
 shopping_list_table = db.Table(
     'shopping_list',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
@@ -10,14 +10,19 @@ shopping_list_table = db.Table(
 )
 
 class User(UserMixin, db.Model):
-    id = db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    """User model for authentication and shopping list."""
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    # Relationship with items in shopping list
     shopping_list_items = db.relationship(
         'GroceryItem',
         secondary=shopping_list_table,
-        backref='user_who_want'
+        backref='users_who_want'
     )
+    # Relationships with created items
+    stores_created = db.relationship('GroceryStore', backref='created_by')
+    items_created = db.relationship('GroceryItem', backref='created_by')
 
 
 class ItemCategory(FormEnum):
@@ -35,12 +40,11 @@ class GroceryStore(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
     address = db.Column(db.String(200), nullable=False)
-    created_by_id = db.Column(db.Integer, db.ForeignKey('user_id'))
-    created_by = db.relationship('User')
-    # items = db.relationship('GroceryItem', back_populates='store')
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 class GroceryItem(db.Model):
+    """Grocery Item model."""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
@@ -49,4 +53,3 @@ class GroceryItem(db.Model):
     store_id = db.Column(db.Integer, db.ForeignKey('grocery_store.id'))
     store = db.relationship('GroceryStore', backref='items')
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_by = db.relationship('User')

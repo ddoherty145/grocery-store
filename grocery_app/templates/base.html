@@ -13,10 +13,19 @@
             {% endfor %}
             <nav>
                 <a href="/">Home</a>
-                <div>
-                    <a href="/new_store">New Store</a>
-                    <a href="/new_item">New Item</a>
-                </div>
+                {% if current_user.is_authenticated %}
+                    <div>
+                        <a href="/new_store">New Store</a>
+                        <a href="/new_item">New Item</a>
+                        <a href="/shopping_list">My Shopping List</a>
+                        <a href="/logout">Log Out ({{ current_user.username }})</a>
+                    </div>
+                {% else %}
+                    <div>
+                        <a href="/login">Log In</a>
+                        <a href="/signup">Sign Up</a>
+                    </div>
+                {% endif %}
             </nav>
             {% block content %}{% endblock %}
         </div>
